@@ -176,7 +176,7 @@ export default function EstadisticasEstudiantiles() {
         },
       });
       const responseData = await response.json();
-      // Procesar datos y actualizar estado
+
       const formattedData = responseData.map((item) => ({
         id: item.id,
         periodo: item.academic_period.period,
@@ -303,14 +303,68 @@ export default function EstadisticasEstudiantiles() {
     const { name, value } = e.target;
     setNewData((prev) => ({
       ...prev,
-      [name]:
-        name === "periodo" || name === "carrera" ? value : parseInt(value),
+      [name]: value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name } = e.target;
+    if (newData[name as keyof typeof newData] === 0) {
+      setNewData((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
+
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (value === "") {
+      setNewData((prev) => ({
+        ...prev,
+        [name]: 0,
+      }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setData((prev) => [...prev, { id: prev.length + 1, ...newData }]);
+
+    // Mapear los datos al formato esperado por la API
+    const payload = {
+      graduate_students: newData.graduados,
+      retired_students: newData.retirados,
+      enrolled_students: newData.matriculados,
+      admited_students: newData.admitidos,
+      career_id: carreras.findIndex((c) => c === newData.carrera) + 1, // Asumiendo que el índice + 1 es el ID correcto
+      academic_period_id: periodos.findIndex((p) => p === newData.periodo) + 1, // Asumiendo que el índice + 1 es el ID correcto
+    };
+
+    try {
+      const response = await fetch("http://localhost:8080/api/statistics", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + Cookies.get("token"),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        // Si la solicitud fue exitosa, agregar el nuevo registro a los datos
+        const responseData = await response.json();
+        setData((prev) => [...prev, { id: responseData.id, ...newData }]);
+      } else {
+        console.error(
+          "Error al guardar el nuevo período:",
+          response.statusText
+        );
+      }
+    } catch (error) {
+      console.error("Error al guardar el nuevo período:", error);
+    }
+
+    // Resetear el estado y cerrar el modal
     setIsModalOpen(false);
     setNewData({
       periodo: "",
@@ -510,18 +564,24 @@ export default function EstadisticasEstudiantiles() {
             <div>
               <label
                 htmlFor="periodo"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Período
               </label>
-              <Input
-                type="text"
+              <Select
                 id="periodo"
-                name="periodo"
+                name="periodo" // Asegúrate de agregar el name
                 value={newData.periodo}
                 onChange={handleInputChange}
                 required
-              />
+              >
+                <option value="">Seleccione un período</option>
+                {periodos.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </Select>
             </div>
             <div>
               <label
@@ -558,6 +618,8 @@ export default function EstadisticasEstudiantiles() {
                 name="graduados"
                 value={newData.graduados}
                 onChange={handleInputChange}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
                 required
               />
             </div>
@@ -574,6 +636,8 @@ export default function EstadisticasEstudiantiles() {
                 name="admitidos"
                 value={newData.admitidos}
                 onChange={handleInputChange}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
                 required
               />
             </div>
@@ -590,6 +654,8 @@ export default function EstadisticasEstudiantiles() {
                 name="matriculados"
                 value={newData.matriculados}
                 onChange={handleInputChange}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
                 required
               />
             </div>
@@ -606,6 +672,8 @@ export default function EstadisticasEstudiantiles() {
                 name="retirados"
                 value={newData.retirados}
                 onChange={handleInputChange}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
                 required
               />
             </div>
