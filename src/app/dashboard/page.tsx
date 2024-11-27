@@ -15,6 +15,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import Cookies from "js-cookie";
+
 // Componentes de shadcn/ui (sin cambios)
 const Card = ({
   className,
@@ -170,9 +172,7 @@ export default function EstadisticasEstudiantiles() {
       const response = await fetch("http://localhost:8080/api/statistics", {
         method: "GET",
         headers: {
-          Authorization:
-            "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvYXBpL2F1dGgvbG9naW4iLCJpYXQiOjE3MzI3NDMyMjcsImV4cCI6MTczMjc0NjgyNywibmJmIjoxNzMyNzQzMjI3LCJqdGkiOiJCUmxPZ2dWZk5jSnhDT1kzIiwic3ViIjoiMiIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.ITWtudQcGa5YaaT3Q3O7DCMd49Xm3faFaRPfmryLQ-M",
-          "Content-Type": "application/json",
+          Authorization: "Bearer " + Cookies.get("token"),
         },
       });
       const responseData = await response.json();
